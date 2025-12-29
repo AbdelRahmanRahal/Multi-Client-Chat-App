@@ -1,9 +1,16 @@
-import sys, socket, ssl, json, threading, base64, os, re
+import base64
+import json
+import os
+import re
+import socket
+import ssl
+import sys
+import threading
 from datetime import datetime
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import Qt, pyqtSignal, QObject, QTimer
-from PyQt5.QtGui import QTextCursor, QFont
 
+from PyQt5.QtCore import QObject, Qt, QTimer, pyqtSignal
+from PyQt5.QtGui import QFont, QTextCursor
+from PyQt5.QtWidgets import *
 
 USERNAME = sys.argv[1]
 SERVER_IP = "127.0.0.1"
@@ -52,9 +59,9 @@ class PrivateChat(QWidget):
         main_layout.addLayout(header)
 
         # Chat area
-        self.chat = QTextBrowser() 
+        self.chat = QTextBrowser()
         self.chat.setSource = lambda url: None
-        self.chat.setOpenExternalLinks(False) # Now this will work!
+        self.chat.setOpenExternalLinks(False)  # Now this will work!
         self.chat.setFont(QFont("Segoe UI", 10))
         main_layout.addWidget(self.chat)
 
@@ -90,7 +97,7 @@ class PrivateChat(QWidget):
             self.typing_timer.stop()
             # Remove typing indicator if showing
             self.remove_typing_indicator()
-            
+
             payload = {"type": "private", "to": self.username, "content": msg}
             conn.sendall(json.dumps(payload).encode())
             self.show_message(USERNAME, msg)  # show locally
@@ -101,14 +108,14 @@ class PrivateChat(QWidget):
         time = datetime.now().strftime("%H:%M")
         is_own = sender == USERNAME
         align = Qt.AlignRight if is_own else Qt.AlignLeft
-        
+
         if is_own:
             bg_color = "#007AFF" if self.main_chat.dark_mode else "#007AFF"
             text_color = "#FF8C00" if self.main_chat.dark_mode else "#FFFFFF"
         else:
             bg_color = "#2C2C2E" if self.main_chat.dark_mode else "#E5E5EA"
             text_color = "#FF8C00" if self.main_chat.dark_mode else "#000000"
-        
+
         bubble = f"""
         <div style="background:{bg_color};color:{text_color};padding:10px 14px;border-radius:18px;
         margin:4px 0;max-width:75%;display:inline-block;box-shadow:0 2px 4px rgba(0,0,0,0.1);">
@@ -120,7 +127,7 @@ class PrivateChat(QWidget):
         self.chat.setAlignment(align)
         self.chat.append(bubble)
         self.chat.moveCursor(QTextCursor.End)
-        
+
         # Remove typing indicator when message is shown
         self.remove_typing_indicator()
 
@@ -144,24 +151,25 @@ class PrivateChat(QWidget):
     def send_typing_notification(self):
         """Send typing notification to server"""
         if self.input.text().strip():
-            conn.sendall(json.dumps({"type":"typing","to":self.username}).encode())
+            conn.sendall(json.dumps(
+                {"type": "typing", "to": self.username}).encode())
             self.last_typing_sent = datetime.now().timestamp()
 
     def show_typing_indicator(self, sender):
         """Show typing indicator in private chat"""
         if sender == USERNAME:
             return
-        
+
         # Remove existing indicator
         self.remove_typing_indicator()
-        
+
         # Add new typing indicator
         typing_color = "#888888" if self.main_chat.dark_mode else "#666666"
         typing_html = f'<div id="typing_indicator" style="color:{typing_color};font-style:italic;padding:4px;font-size:12px;">✍️ {sender} is typing...</div>'
         self.chat.append(typing_html)
         self.chat.moveCursor(QTextCursor.End)
         self.typing_indicator_id = "typing_indicator"
-        
+
         # Auto-remove after 3 seconds
         QTimer.singleShot(3000, self.remove_typing_indicator)
 
@@ -210,19 +218,19 @@ class Chat(QWidget):
         toolbar = QHBoxLayout()
         toolbar.setContentsMargins(10, 8, 10, 8)
         toolbar.setSpacing(10)
-        
+
         # Title
         title_label = QLabel(f"💬 Chat - {USERNAME}")
         title_label.setFont(QFont("Arial", 12, QFont.Bold))
         toolbar.addWidget(title_label)
-        
+
         toolbar.addStretch()
-        
+
         # Connection status
         self.status_label = QLabel("🟢 Connected")
         self.status_label.setFont(QFont("Arial", 9))
         toolbar.addWidget(self.status_label)
-        
+
         # Search bar
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("🔍 Search messages...")
@@ -230,107 +238,107 @@ class Chat(QWidget):
         self.search_input.setMinimumHeight(30)
         self.search_input.returnPressed.connect(self.search_messages)
         toolbar.addWidget(self.search_input)
-        
+
         search_btn = QPushButton("Search")
         search_btn.setMinimumHeight(30)
         search_btn.clicked.connect(self.search_messages)
         toolbar.addWidget(search_btn)
-        
+
         # Theme toggle
         self.mode_btn = QPushButton("🌙")
         self.mode_btn.setToolTip("Toggle Dark/Light Mode")
         self.mode_btn.setMinimumSize(40, 30)
         self.mode_btn.clicked.connect(self.toggle_mode)
         toolbar.addWidget(self.mode_btn)
-        
+
         main_layout.addLayout(toolbar)
 
         # Splitter for chat and users
         splitter = QSplitter(Qt.Horizontal)
-        
+
         # Left side - Chat area
         chat_widget = QWidget()
         chat_layout = QVBoxLayout(chat_widget)
         chat_layout.setContentsMargins(10, 10, 10, 10)
         chat_layout.setSpacing(10)
-        
-        self.chat = QTextBrowser() 
+
+        self.chat = QTextBrowser()
         self.chat.setSource = lambda url: None
-        self.chat.setOpenExternalLinks(False) # Now this will work!
+        self.chat.setOpenExternalLinks(False)  # Now this will work!
         self.chat.setFont(QFont("Segoe UI", 10))
         chat_layout.addWidget(self.chat)
-        
+
         # Input area
         input_container = QHBoxLayout()
         input_container.setSpacing(8)
-        
+
         self.input = QLineEdit()
-        self.input.setPlaceholderText("Type a message... (Press Enter to send)")
+        self.input.setPlaceholderText(
+            "Type a message... (Press Enter to send)")
         self.input.setMinimumHeight(40)
         self.input.returnPressed.connect(self.send_group)
 
-
-        #Handling files
+        # Handling files
         self.chat.setTextInteractionFlags(Qt.TextBrowserInteraction)
         self.chat.anchorClicked.connect(self.handle_file_click)
-        
+
         # Button container
         btn_container = QHBoxLayout()
         btn_container.setSpacing(5)
-        
+
         emoji_btn = QPushButton("😊")
         emoji_btn.setToolTip("Insert emoji")
         emoji_btn.setMinimumSize(40, 40)
         emoji_btn.clicked.connect(lambda: self.input.insert("😊"))
-        
+
         file_btn = QPushButton("📎")
         file_btn.setToolTip("Send file")
         file_btn.setMinimumSize(40, 40)
         file_btn.clicked.connect(self.send_file)
-        
+
         private_btn = QPushButton("💬")
         private_btn.setToolTip("Private chat with selected user")
         private_btn.setMinimumSize(40, 40)
         private_btn.clicked.connect(self.open_selected_private_chat)
-        
+
         send_btn = QPushButton("Send")
         send_btn.setToolTip("Send message (Enter)")
         send_btn.setMinimumSize(80, 40)
         send_btn.clicked.connect(self.send_group)
-        
+
         btn_container.addWidget(emoji_btn)
         btn_container.addWidget(file_btn)
         btn_container.addWidget(private_btn)
         btn_container.addWidget(send_btn)
-        
+
         input_container.addWidget(self.input)
         input_container.addLayout(btn_container)
         chat_layout.addLayout(input_container)
-        
+
         splitter.addWidget(chat_widget)
-        
+
         # Right side - Users panel
         users_widget = QWidget()
         users_layout = QVBoxLayout(users_widget)
         users_layout.setContentsMargins(10, 10, 10, 10)
         users_layout.setSpacing(8)
-        
+
         users_label = QLabel("👥 Online Users")
         users_label.setFont(QFont("Arial", 11, QFont.Bold))
         users_layout.addWidget(users_label)
-        
+
         self.users = QListWidget()
         self.users.itemDoubleClicked.connect(self.open_private_chat)
         self.users.setMinimumWidth(200)
         users_layout.addWidget(self.users)
-        
+
         splitter.addWidget(users_widget)
-        
+
         # Set splitter proportions (70% chat, 30% users)
         splitter.setStretchFactor(0, 3)
         splitter.setStretchFactor(1, 1)
         splitter.setSizes([700, 300])
-        
+
         main_layout.addWidget(splitter)
 
         # Connect signals
@@ -338,11 +346,10 @@ class Chat(QWidget):
 
         # Apply styling
         self.setStyleSheet(self.dark_stylesheet())
-        
+
         # Start listening thread
         threading.Thread(target=self.listen, daemon=True).start()
 
-   
     def toggle_mode(self):
         self.dark_mode = not self.dark_mode
         if self.dark_mode:
@@ -353,7 +360,7 @@ class Chat(QWidget):
             self.setStyleSheet(self.light_stylesheet())
             self.mode_btn.setText("☀️")
             self.mode_btn.setToolTip("Switch to Dark Mode")
-        
+
         # Update private chat windows
         for chat in self.private_chats.values():
             if self.dark_mode:
@@ -505,14 +512,13 @@ class Chat(QWidget):
         }
         """
 
-   
     def send_group(self):
         msg = self.input.text().strip()
         if msg:
             # Stop typing timer and remove indicator
             self.typing_debounce_timer.stop()
             self.remove_typing(USERNAME)
-            
+
             payload = {"type": "group", "content": msg}
             conn.sendall(json.dumps(payload).encode())
             self.show_message(USERNAME, msg)  # show locally
@@ -522,9 +528,10 @@ class Chat(QWidget):
     def send_file(self):
         path, _ = QFileDialog.getOpenFileName(self)
         if path:
-            with open(path,"rb") as f:
+            with open(path, "rb") as f:
                 data = base64.b64encode(f.read()).decode()
-            payload = {"type":"file","filename":os.path.basename(path),"filedata":data}
+            payload = {"type": "file", "filename": os.path.basename(
+                path), "filedata": data}
             conn.sendall(json.dumps(payload).encode())
             self.show_message(USERNAME, f"Sent file: {os.path.basename(path)}")
             self.remove_typing(USERNAME)
@@ -535,29 +542,34 @@ class Chat(QWidget):
         url_str = url.toString()
         if url_str.startswith("file:"):
             filename = url_str.split("file:")[1]
-            
+
             # Retrieve the base64 data we saved earlier
             filedata_base64 = getattr(self, 'download_cache', {}).get(filename)
-            
+
             if not filedata_base64:
-                QMessageBox.warning(self, "Download Error", "File data not found in current session.")
+                QMessageBox.warning(self, "Download Error",
+                                    "File data not found in current session.")
                 return
 
             # Open Save File Dialog
-            save_path, _ = QFileDialog.getSaveFileName(self, "Save File", filename)
-            
+            save_path, _ = QFileDialog.getSaveFileName(
+                self, "Save File", filename)
+
             if save_path:
                 try:
                     with open(save_path, "wb") as f:
                         f.write(base64.b64decode(filedata_base64))
-                    QMessageBox.information(self, "Success", f"File saved to:\n{save_path}")
+                    QMessageBox.information(
+                        self, "Success", f"File saved to:\n{save_path}")
                 except Exception as e:
-                    QMessageBox.critical(self, "Error", f"Could not save file: {e}")
+                    QMessageBox.critical(
+                        self, "Error", f"Could not save file: {e}")
 
     def search_messages(self):
         key = self.search_input.text().strip()
         if key:
-            conn.sendall(json.dumps({"type":"search","content":key}).encode())
+            conn.sendall(json.dumps(
+                {"type": "search", "content": key}).encode())
 
     def on_group_text_changed(self):
         """Handle text changes in group chat with debouncing"""
@@ -579,23 +591,23 @@ class Chat(QWidget):
     def send_group_typing(self):
         """Send typing notification for group chat"""
         if self.input.text().strip():
-            conn.sendall(json.dumps({"type":"typing","to":None}).encode())
+            conn.sendall(json.dumps({"type": "typing", "to": None}).encode())
             self.last_typing_sent = datetime.now().timestamp()
 
-  
     def show_message(self, msg_or_sender, content=None):
         if isinstance(msg_or_sender, dict):
             msg = msg_or_sender
             sender = msg.get("sender")
-            content = msg.get("content", msg.get("filename",""))
+            content = msg.get("content", msg.get("filename", ""))
             msg_type = msg.get("type")
         else:
             sender = msg_or_sender
             msg_type = "group"
 
         # Private messages
-        if msg_type=="private":
-            target = msg.get("sender") if msg.get("sender")!=USERNAME else msg.get("to")
+        if msg_type == "private":
+            target = msg.get("sender") if msg.get(
+                "sender") != USERNAME else msg.get("to")
             if target not in self.private_chats:
                 self.private_chats[target] = PrivateChat(target, self)
             self.private_chats[target].show_message(msg.get("sender"), content)
@@ -605,26 +617,27 @@ class Chat(QWidget):
         time = datetime.now().strftime("%H:%M")
         date = datetime.now().strftime("%Y-%m-%d")
         is_own = sender == USERNAME
-        
+
         if is_own:
             bg_color = "#007AFF" if self.dark_mode else "#007AFF"
             text_color = "#FF8C00" if self.dark_mode else "#000000"
         else:
             bg_color = "#2C2C2E" if self.dark_mode else "#E5E5EA"
             text_color = "#FF8C00" if self.dark_mode else "#000000"
-        
+
         # File message styling
         if msg_type == "file":
             file_icon = "📎"
             # Get the actual data if it's there
-            file_data = msg.get("filedata", "") 
+            file_data = msg.get("filedata", "")
             # We store the data inside the link using a custom scheme or just the filename
             content = f'<a href="file:{content}" style="color:#58A6FF; text-decoration:none;">{file_icon} {content}</a>'
             # Store the data globally so we can access it when clicked
             if file_data:
-                if not hasattr(self, 'download_cache'): self.download_cache = {}
+                if not hasattr(self, 'download_cache'):
+                    self.download_cache = {}
                 self.download_cache[msg.get("filename")] = file_data
-        
+
         bubble = f"""
         <div style="background:{bg_color};color:{text_color};padding:12px 16px;border-radius:18px;
         margin:6px 0;max-width:75%;display:inline-block;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
@@ -633,36 +646,35 @@ class Chat(QWidget):
         <div style="font-size:11px;opacity:0.7;margin-top:6px;text-align:right;">{time}</div>
         </div>
         """
-        
+
         align = Qt.AlignRight if is_own else Qt.AlignLeft
         self.chat.setAlignment(align)
         self.chat.append(bubble)
         self.chat.moveCursor(QTextCursor.End)
 
-  
     def show_typing(self, sender):
         """Show typing indicator in group chat"""
         if sender == USERNAME:
             return
-        
+
         # Check if this is a private message typing indicator
         # If sender is in private chats, show in that window instead
         if sender in self.private_chats:
             self.private_chats[sender].show_typing_indicator(sender)
             return
-        
+
         # Group chat typing indicator
         # Remove existing indicator for this user if any
         if sender in self.typing_users:
             self.remove_typing(sender)
-        
+
         self.typing_users[sender] = True
         typing_color = "#888888" if self.dark_mode else "#666666"
         typing_html = f'<div id="typing_{sender}" style="color:{typing_color};font-style:italic;padding:4px;font-size:12px;">✍️ {sender} is typing...</div>'
         self.chat.append(typing_html)
         self.chat.moveCursor(QTextCursor.End)
         self.typing_indicator_ids[sender] = f"typing_{sender}"
-        
+
         # Auto-remove after 3 seconds
         QTimer.singleShot(3000, lambda s=sender: self.remove_typing(s))
 
@@ -671,7 +683,7 @@ class Chat(QWidget):
         if sender in self.typing_users:
             # Remove from tracking
             self.typing_users.pop(sender, None)
-            
+
             # Remove HTML element
             if sender in self.typing_indicator_ids:
                 html = self.chat.toHtml()
@@ -682,7 +694,6 @@ class Chat(QWidget):
                 self.chat.moveCursor(QTextCursor.End)
                 self.typing_indicator_ids.pop(sender, None)
 
-  
     def open_private_chat(self, item):
         username = item.text().replace("🟢 ", "").strip()
         if username not in self.private_chats:
@@ -696,50 +707,50 @@ class Chat(QWidget):
         if user:
             self.open_private_chat(user)
         else:
-            QMessageBox.information(self, "No User Selected", "Please select a user from the list first.")
+            QMessageBox.information(
+                self, "No User Selected", "Please select a user from the list first.")
 
-   
     def update_users(self, users):
         self.users.clear()
         for user in users:
             if user != USERNAME:  # Don't show self in list
                 item = QListWidgetItem(f"🟢 {user}")
                 self.users.addItem(item)
-        
+
         # Update connection status
         if self.connected:
             self.status_label.setText(f"🟢 Connected ({len(users)} users)")
         else:
             self.status_label.setText("🔴 Disconnected")
 
-  
     def listen(self):
         while True:
             try:
                 data = conn.recv(8192)
-                if not data: 
+                if not data:
                     self.connected = False
                     self.status_label.setText("🔴 Disconnected")
                     break
                 msg = json.loads(data.decode())
-                if msg["type"]=="status":
+                if msg["type"] == "status":
                     self.sig.status.emit(msg["users"])
-                elif msg["type"]=="history":
+                elif msg["type"] == "history":
                     for m in msg["messages"]:
                         self.sig.message.emit({
                             "sender": m["sender"],
                             "content": m["content"],
                             "type": m.get("type", "group"),
                             "status": "",
-                            "filename": m["content"] if m.get("type")=="file" else ""
+                            "filename": m["content"] if m.get("type") == "file" else ""
                         })
-                elif msg["type"]=="typing":
+                elif msg["type"] == "typing":
                     sender = msg.get("sender")
                     to_user = msg.get("to")
                     # If it's a private typing indicator, route to private chat
                     if to_user and to_user == USERNAME and sender in self.private_chats:
                         # Show in private chat window
-                        self.private_chats[sender].show_typing_indicator(sender)
+                        self.private_chats[sender].show_typing_indicator(
+                            sender)
                     else:
                         # Group typing indicator
                         self.sig.typing.emit(sender)
@@ -752,6 +763,7 @@ class Chat(QWidget):
                 self.connected = False
                 self.status_label.setText("🔴 Connection Error")
                 break
+
 
 app = QApplication(sys.argv)
 Chat().show()
