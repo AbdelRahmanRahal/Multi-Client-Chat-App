@@ -97,6 +97,12 @@ class Chat(QWidget):
         self.chat.setFont(QFont("Segoe UI", 10))
         chat_layout.addWidget(self.chat)
 
+        # Typing indicator label
+        self.typing_label = QLabel()
+        self.typing_label.setFont(QFont("Segoe UI", 9, QFont.StyleItalic))
+        self.typing_label.hide()
+        chat_layout.addWidget(self.typing_label)
+
         # Input area
         input_container = QHBoxLayout()
         input_container.setSpacing(8)
@@ -491,36 +497,52 @@ class Chat(QWidget):
         if sender == USERNAME:
             return
 
-        # Group chat typing indicator
-        # Remove existing indicator for this user if any
-        if sender in self.typing_users:
-            self.remove_typing(sender)
+        # Update timer
+        if sender in self.typing_timers:
+            self.typing_timers[sender].stop()
 
+        # Create new timer to remove typing status
+        timer = QTimer()
+        timer.setSingleShot(True)
+        timer.timeout.connect(lambda: self.remove_typing(sender))
+        timer.start(3000)
+        self.typing_timers[sender] = timer
+
+        # Add to tracking
         self.typing_users[sender] = True
-        typing_color = "#888888" if self.dark_mode else "#666666"
-        typing_html = f'<div id="typing_{sender}" style="color:{typing_color};font-style:italic;padding:4px;font-size:12px;">✍️ {sender} is typing...</div>'
-        self.chat.append(typing_html)
-        self.chat.moveCursor(QTextCursor.End)
-        self.typing_indicator_ids[sender] = f"typing_{sender}"
-
-        # Auto-remove after 3 seconds
-        QTimer.singleShot(3000, lambda s=sender: self.remove_typing(s))
+        self.update_typing_label()
 
     def remove_typing(self, sender):
         """Remove typing indicator from group chat"""
         if sender in self.typing_users:
-            # Remove from tracking
-            self.typing_users.pop(sender, None)
+            del self.typing_users[sender]
 
-            # Remove HTML element
-            if sender in self.typing_indicator_ids:
-                html = self.chat.toHtml()
-                import re
-                pattern = rf'<div id="typing_{re.escape(sender)}"[^>]*>.*?</div>'
-                html = re.sub(pattern, '', html, flags=re.DOTALL)
-                self.chat.setHtml(html)
-                self.chat.moveCursor(QTextCursor.End)
-                self.typing_indicator_ids.pop(sender, None)
+        if sender in self.typing_timers:
+            self.typing_timers[sender].stop()
+            del self.typing_timers[sender]
+
+        self.update_typing_label()
+
+    def update_typing_label(self):
+        users = list(self.typing_users.keys())
+        if not users:
+            self.typing_label.clear()
+            self.typing_label.hide()
+            return
+
+        self.typing_label.show()
+        color = "#888888" if self.dark_mode else "#666666"
+        self.typing_label.setStyleSheet(
+            f"color: {color}; margin-left: 5px; font-style: italic;")
+
+        if len(users) == 1:
+            text = f"✍️ {users[0]} is typing..."
+        elif len(users) == 2:
+            text = f"✍️ {users[0]} and {users[1]} are typing..."
+        else:
+            text = f"✍️ {len(users)} users are typing..."
+
+        self.typing_label.setText(text)
 
     def open_private_chat(self, item):
         username = item.text().replace("🟢 ", "").strip()
