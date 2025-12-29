@@ -91,8 +91,16 @@ class PrivateChat(QWidget):
             self.input.clear()
             self.last_typing_sent = 0
 
-    def show_message(self, sender, content):
-        time = datetime.now().strftime("%H:%M")
+    def show_message(self, sender, content, timestamp=None):
+        if timestamp:
+            try:
+                dt = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+                time = dt.strftime("%H:%M")
+            except ValueError:
+                time = timestamp
+        else:
+            time = datetime.now().strftime("%H:%M")
+
         is_own = sender == USERNAME
         align = Qt.AlignRight if is_own else Qt.AlignLeft
 

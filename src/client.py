@@ -430,11 +430,13 @@ class Chat(QWidget):
             self.last_typing_sent = datetime.now().timestamp()
 
     def show_message(self, msg_or_sender, content=None):
+        timestamp = None
         if isinstance(msg_or_sender, dict):
             msg = msg_or_sender
             sender = msg.get("sender")
             content = msg.get("content", msg.get("filename", ""))
             msg_type = msg.get("type")
+            timestamp = msg.get("timestamp")
         else:
             sender = msg_or_sender
             msg_type = "group"
@@ -449,11 +451,20 @@ class Chat(QWidget):
                 "sender") != USERNAME else msg.get("to")
             if target not in self.private_chats:
                 self.private_chats[target] = PrivateChat(target, self)
-            self.private_chats[target].show_message(msg.get("sender"), content)
+            self.private_chats[target].show_message(
+                msg.get("sender"), content, timestamp)
             return
 
         # Group/file messages
-        time = datetime.now().strftime("%H:%M")
+        if timestamp:
+            try:
+                dt = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+                time = dt.strftime("%H:%M")
+            except ValueError:
+                time = timestamp
+        else:
+            time = datetime.now().strftime("%H:%M")
+
         date = datetime.now().strftime("%Y-%m-%d")
         is_own = sender == USERNAME
 
@@ -652,7 +663,8 @@ class Chat(QWidget):
                             "type": m.get("type", "group"),
                             "to": m.get("receiver"),
                             "status": "",
-                            "filename": m["content"] if m.get("type") == "file" else ""
+                            "filename": m["content"] if m.get("type") == "file" else "",
+                            "timestamp": m.get("timestamp")
                         })
                 elif msg["type"] == "typing":
                     sender = msg.get("sender")
