@@ -161,7 +161,7 @@ def handle_client(conn):
             elif t == "typing":
                 to = msg.get("to")
                 payload = json.dumps(
-                    {"type": "typing", "sender": username}).encode()
+                    {"type": "typing", "sender": username, "to": to}).encode()
 
                 # If private typing, send only to recipient
                 if to:

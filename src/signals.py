@@ -5,3 +5,4 @@ class Signals(QObject):
     status = pyqtSignal(list)
     message = pyqtSignal(dict)
     typing = pyqtSignal(str)
+    private_typing = pyqtSignal(str)

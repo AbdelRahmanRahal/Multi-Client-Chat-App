@@ -25,6 +25,7 @@ class Chat(QWidget):
         self.sig.status.connect(self.update_users)
         self.sig.message.connect(self.show_message)
         self.sig.typing.connect(self.show_typing)
+        self.sig.private_typing.connect(self.show_private_typing)
 
         self.typing_users = {}
         self.typing_timers = {}  # Track typing timers per user
@@ -480,15 +481,14 @@ class Chat(QWidget):
         self.chat.append(bubble)
         self.chat.moveCursor(QTextCursor.End)
 
+    def show_private_typing(self, sender):
+        """Show typing indicator in private chat"""
+        if sender in self.private_chats:
+            self.private_chats[sender].show_typing_indicator(sender)
+
     def show_typing(self, sender):
         """Show typing indicator in group chat"""
         if sender == USERNAME:
-            return
-
-        # Check if this is a private message typing indicator
-        # If sender is in private chats, show in that window instead
-        if sender in self.private_chats:
-            self.private_chats[sender].show_typing_indicator(sender)
             return
 
         # Group chat typing indicator
@@ -574,11 +574,9 @@ class Chat(QWidget):
                 elif msg["type"] == "typing":
                     sender = msg.get("sender")
                     to_user = msg.get("to")
-                    # If it's a private typing indicator, route to private chat
-                    if to_user and to_user == USERNAME and sender in self.private_chats:
-                        # Show in private chat window
-                        self.private_chats[sender].show_typing_indicator(
-                            sender)
+                    # If it's a private typing indicator, route to private chat via signal
+                    if to_user and to_user == USERNAME:
+                        self.sig.private_typing.emit(sender)
                     else:
                         # Group typing indicator
                         self.sig.typing.emit(sender)
