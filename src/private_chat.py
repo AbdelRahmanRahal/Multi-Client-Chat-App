@@ -21,7 +21,10 @@ class PrivateChat(QWidget):
         self.typing_timer.setSingleShot(True)
         self.typing_timer.timeout.connect(self.send_typing_notification)
         self.last_typing_sent = 0
-        self.typing_indicator_id = None  # Track typing indicator in chat
+
+        self.hide_typing_timer = QTimer()
+        self.hide_typing_timer.setSingleShot(True)
+        self.hide_typing_timer.timeout.connect(self.remove_typing_indicator)
 
         # Main layout
         main_layout = QVBoxLayout(self)
@@ -42,6 +45,12 @@ class PrivateChat(QWidget):
         self.chat.setOpenExternalLinks(False)  # Now this will work!
         self.chat.setFont(QFont("Segoe UI", 10))
         main_layout.addWidget(self.chat)
+
+        # Typing indicator label
+        self.typing_label = QLabel()
+        self.typing_label.setFont(QFont("Segoe UI", 9, QFont.StyleItalic))
+        self.typing_label.hide()
+        main_layout.addWidget(self.typing_label)
 
         # Input area
         input_container = QHBoxLayout()
@@ -138,27 +147,17 @@ class PrivateChat(QWidget):
         if sender == USERNAME:
             return
 
-        # Remove existing indicator
-        self.remove_typing_indicator()
+        self.hide_typing_timer.stop()
 
-        # Add new typing indicator
         typing_color = "#888888" if self.main_chat.dark_mode else "#666666"
-        typing_html = f'<div id="typing_indicator" style="color:{typing_color};font-style:italic;padding:4px;font-size:12px;">✍️ {sender} is typing...</div>'
-        self.chat.append(typing_html)
-        self.chat.moveCursor(QTextCursor.End)
-        self.typing_indicator_id = "typing_indicator"
+        self.typing_label.setStyleSheet(
+            f"color: {typing_color}; margin-left: 5px; font-style: italic;")
+        self.typing_label.setText(f"✍️ {sender} is typing...")
+        self.typing_label.show()
 
-        # Auto-remove after 3 seconds
-        QTimer.singleShot(3000, self.remove_typing_indicator)
+        self.hide_typing_timer.start(3000)
 
     def remove_typing_indicator(self):
         """Remove typing indicator from chat"""
-        if self.typing_indicator_id:
-            # Get current HTML
-            html = self.chat.toHtml()
-            # Remove typing indicator div
-            pattern = r'<div id="typing_indicator"[^>]*>.*?</div>'
-            html = re.sub(pattern, '', html, flags=re.DOTALL)
-            self.chat.setHtml(html)
-            self.chat.moveCursor(QTextCursor.End)
-            self.typing_indicator_id = None
+        self.typing_label.clear()
+        self.typing_label.hide()
