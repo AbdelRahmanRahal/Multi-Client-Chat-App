@@ -167,7 +167,7 @@ def handle_client(conn):
                     with open(path, "wb") as f:
                         f.write(filedata)
                     db.insert_message(username, "FILE", safe_filename, "file")
-                    payload = json.dumps({"type":"file","sender":username,"filename":safe_filename}).encode()
+                    payload = json.dumps({"type":"file","sender":username,"filename":safe_filename, "filedata": filedata_str}).encode()
                     broadcast(payload, exclude=username)
                 except Exception as e:
                     print(f"Error saving file from {username}: {e}")
