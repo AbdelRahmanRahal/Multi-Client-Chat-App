@@ -1,0 +1,2 @@
+PyQt5==5.15.7       # Qt GUI for desktop client
+Pillow==9.5.0       # Optional: image/file preview support
