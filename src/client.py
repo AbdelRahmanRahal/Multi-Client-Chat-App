@@ -439,6 +439,10 @@ class Chat(QWidget):
             sender = msg_or_sender
             msg_type = "group"
 
+        if msg_type == "search_result":
+            self.display_search_results(msg.get("results", []))
+            return
+
         # Private messages
         if msg_type == "private":
             target = msg.get("sender") if msg.get(
@@ -486,6 +490,62 @@ class Chat(QWidget):
         self.chat.setAlignment(align)
         self.chat.append(bubble)
         self.chat.moveCursor(QTextCursor.End)
+
+    def display_search_results(self, results):
+        dialog = QDialog(self)
+        dialog.setWindowTitle("🔍 Search Results")
+        dialog.resize(500, 600)
+
+        layout = QVBoxLayout(dialog)
+
+        # Title
+        title = QLabel(f"Found {len(results)} messages")
+        title.setFont(QFont("Arial", 12, QFont.Bold))
+        layout.addWidget(title)
+
+        # Results area
+        browser = QTextBrowser()
+        browser.setOpenExternalLinks(False)
+        layout.addWidget(browser)
+
+        # Close button
+        btn = QPushButton("Close")
+        btn.clicked.connect(dialog.close)
+        layout.addWidget(btn)
+
+        # Apply theme
+        if self.dark_mode:
+            dialog.setStyleSheet(self.dark_stylesheet())
+            bg = "#21262D"
+            border = "#30363D"
+            text = "#E6EDF3"
+            meta = "#8B949E"
+        else:
+            dialog.setStyleSheet(self.light_stylesheet())
+            bg = "#FFFFFF"
+            border = "#D1D9DE"
+            text = "#1F2328"
+            meta = "#656D76"
+
+        if not results:
+            browser.setText("No messages found matching your search.")
+
+        for res in results:
+            r_sender = res.get("sender", "Unknown")
+            r_content = res.get("content", "")
+            r_time = res.get("timestamp", "")
+
+            html = f"""
+            <div style="background:{bg}; border:1px solid {border}; border-radius:6px; padding:8px; margin:4px 0;">
+                <div style="font-size:11px; color:{meta}; margin-bottom:4px;">
+                    <b>{r_sender}</b> <span style="float:right;">{r_time}</span>
+                </div>
+                <div style="color:{text}; font-size:13px;">{r_content}</div>
+            </div>
+            """
+            browser.append(html)
+
+        dialog.exec_()
 
     def show_private_typing(self, sender):
         """Show typing indicator in private chat"""
