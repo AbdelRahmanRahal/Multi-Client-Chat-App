@@ -590,6 +590,7 @@ class Chat(QWidget):
                             "sender": m["sender"],
                             "content": m["content"],
                             "type": m.get("type", "group"),
+                            "to": m.get("receiver"),
                             "status": "",
                             "filename": m["content"] if m.get("type") == "file" else ""
                         })

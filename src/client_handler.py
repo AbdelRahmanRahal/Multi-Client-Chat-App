@@ -67,6 +67,11 @@ def handle_client(conn):
         history = db.get_messages()
         formatted_history = []
         for msg in history:
+            # Filter private messages: only send if user is sender or receiver
+            if msg.get("type") == "private":
+                if msg.get("sender") != username and msg.get("receiver") != username:
+                    continue
+
             formatted_msg = {
                 "sender": msg.get("sender", ""),
                 "content": msg.get("content", ""),
