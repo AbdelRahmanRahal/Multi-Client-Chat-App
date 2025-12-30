@@ -38,9 +38,19 @@ def main():
     try:
         server.bind((HOST, PORT))
         server.listen(100)
+
+        try:
+            # Attempt to find the local LAN IP address
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            lan_ip = s.getsockname()[0]
+            s.close()
+        except:
+            lan_ip = "Unknown (Check ipconfig/ifconfig)"
+
         print("=" * 50)
         print(f" Multi-Client Chat Server Running...")
-        print(f" Listening on {HOST}:{PORT}")
+        print(f" Listening on {HOST}:{PORT} (LAN IP: {lan_ip})")
         print(f" Uploads directory: {UPLOADS_DIR}")
         print("=" * 50)
 
