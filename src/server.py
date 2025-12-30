@@ -2,6 +2,7 @@ import os
 import socket
 import ssl
 import threading
+import sys
 
 from client_handler import handle_client
 from server_state import UPLOADS_DIR
@@ -18,15 +19,16 @@ if os.path.exists(cert_file) and os.path.exists(key_file):
     try:
         context.load_cert_chain(cert_file, key_file)
         print(f"✓ SSL certificates loaded: {cert_file}, {key_file}")
-    except Exception as e:
-        print(f"Warning: Could not load SSL certificates: {e}")
-        print(" Server will continue but SSL may not work properly.")
+    except ssl.SSLError as e:
+        print(f"Error: Could not load SSL certificates: {e}")
+        print("Please check the certificate files and their permissions.")
+        sys.exit(1)
 else:
-    print(
-        f"Warning: SSL certificate files not found ({cert_file}, {key_file})")
-    print(" Server will continue but SSL may not work properly.")
+    print(f"Error: SSL certificate files not found ({cert_file}, {key_file})")
+    print(" This server requires SSL to run.")
     print(" To generate self-signed certificates, run:")
     print("   openssl req -x509 -newkey rsa:4096 -nodes -keyout key.pem -out cert.pem -days 365")
+    sys.exit(1)
 
 
 def main():
